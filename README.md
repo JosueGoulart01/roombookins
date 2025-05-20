@@ -4,15 +4,3 @@ O projeto RoomBookings – Gestão de Reservas de Salas de Reunião tem como obj
 
 O sistema permitirá que clientes, identificados por nome e CPF ou como convidados, realizem reservas de salas específicas com base em sua disponibilidade, capacidade e recursos oferecidos (como projetor, videoconferência e quadro branco). Além disso, o custo das reservas será calculado automaticamente, com valor base de R$50 por hora e desconto de 10% para clientes corporativos. Essa plataforma visa facilitar a gestão interna, aumentar a eficiência operacional e oferecer uma experiência intuitiva e transparente aos usuários
 
-## Alunos integrantes da equipe
-
-* Davi Nunes Carvalho
-* Josué Carlos Goulart dos Reis
-* Luiz Ferndando Moreira
-* Matheus Malta
-* Nicolas Kiffer
-
-## Professor responsável 
-
-* Danilo Boechat Seufitelli
-
