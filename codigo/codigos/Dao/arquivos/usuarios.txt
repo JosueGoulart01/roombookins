@@ -4,3 +4,4 @@ caio;17981469678;33925460;walter;116;Bh;Brasil;false
 joao vitor;1111;339231;rua 1111;2323;bh;br;false
 ssss;111.111.111-11;22222-222;jjj;1;2;3;false
 jose reis;222.222.222-22;31231-313;rua br20;20;bh;br;false
+erlane;030.006.106-42;33925-460;walter;116;bh;brasil;false

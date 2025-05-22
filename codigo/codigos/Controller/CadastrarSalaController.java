@@ -1,10 +1,10 @@
-// CadastrarSalaController.java - Atualizado para salvar no arquivo
 package Controller;
 
-import Dao.Dados;
+import Dao.SalaDao;
 import Model.*;
 import View.CadastrarSalaView;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.*;
 
@@ -15,6 +15,9 @@ public class CadastrarSalaController {
     private ArrayList<Reserva> listaReservas;
     private File arquivoSalas, arquivoUsuarios, arquivoReservas;
 
+    // DAOs modulares
+    private SalaDao salaDao;
+
     public CadastrarSalaController(JDesktopPane tela, ArrayList<Sala> listaSalas, ArrayList<Usuario> listaUsuarios,
                                    ArrayList<Reserva> listaReservas, File arquivoSalas, File arquivoUsuarios, File arquivoReservas) {
         this.listaSalas = listaSalas;
@@ -23,6 +26,8 @@ public class CadastrarSalaController {
         this.arquivoSalas = arquivoSalas;
         this.arquivoUsuarios = arquivoUsuarios;
         this.arquivoReservas = arquivoReservas;
+
+        this.salaDao = new SalaDao(); 
 
         cadastrarSalaView = new CadastrarSalaView();
         tela.add(cadastrarSalaView);
@@ -65,14 +70,15 @@ public class CadastrarSalaController {
                 case 3 -> sala = new SalaStandard(codigo, capacidade, tipo, endereco);
                 default -> throw new IllegalArgumentException("Tipo de sala inválido");
             }
+
             listaSalas.add(sala);
-            try {
-                Dados.escritaArquivos(listaSalas, listaUsuarios, listaReservas, arquivoSalas, arquivoUsuarios, arquivoReservas);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(cadastrarSalaView, "Erro ao salvar arquivo: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
+
+            salaDao.salvar(listaSalas, arquivoSalas);
+
             JOptionPane.showMessageDialog(cadastrarSalaView, "Sala cadastrada com sucesso!");
             cadastrarSalaView.dispose();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(cadastrarSalaView, "Erro ao salvar arquivo: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(cadastrarSalaView, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }

@@ -1,9 +1,10 @@
 package Controller;
 
-import Dao.Dados;
+import Dao.ReservaDao;
 import Model.*;
 import View.CadastrarReservaView;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import javax.swing.*;
@@ -15,6 +16,9 @@ public class CadastrarReservaController {
     private ArrayList<Sala> listaSalas;
     private File arquivoSalas, arquivoUsuarios, arquivoReservas;
 
+    // DAO para reservas
+    private ReservaDao reservaDao;
+
     public CadastrarReservaController(JDesktopPane tela, ArrayList<Usuario> listaUsuarios, ArrayList<Sala> listaSalas,
                                      ArrayList<Reserva> listaReservas, File arquivoSalas, File arquivoUsuarios, File arquivoReservas) {
         this.listaReservas = listaReservas;
@@ -23,6 +27,8 @@ public class CadastrarReservaController {
         this.arquivoSalas = arquivoSalas;
         this.arquivoUsuarios = arquivoUsuarios;
         this.arquivoReservas = arquivoReservas;
+
+        this.reservaDao = new ReservaDao(); // inicializa DAO de reserva
 
         cadastrarReservaView = new CadastrarReservaView();
         tela.add(cadastrarReservaView);
@@ -70,14 +76,18 @@ public class CadastrarReservaController {
 
             listaReservas.add(reserva);
 
-            Dados.escritaArquivos(listaSalas, listaUsuarios, listaReservas, arquivoSalas, arquivoUsuarios, arquivoReservas);
+            // Usando DAO para salvar reservas no arquivo
+            reservaDao.salvar(listaReservas, arquivoReservas);
 
             JOptionPane.showMessageDialog(cadastrarReservaView,
-                    "Reserva cadastrada com sucesso!\nPreço: " + reserva.calcularPreco(reserva));
+                    "Reserva cadastrada com sucesso!\nPreço: " + reserva.calcularPreco());
             cadastrarReservaView.dispose();
 
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(cadastrarReservaView, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(cadastrarReservaView,
+                    "Erro ao salvar arquivo de reservas: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(cadastrarReservaView,
                     "Erro ao cadastrar reserva. Verifique os dados.", "Erro", JOptionPane.ERROR_MESSAGE);

@@ -1,5 +1,8 @@
 package Controller;
 
+import Dao.ReservaDao;
+import Dao.SalaDao;
+import Dao.UsuarioDao;
 import Model.*;
 import View.MenuView;
 import java.io.File;
@@ -7,66 +10,88 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 public class MenuController {
-    private MenuView menuView;
-    private ArrayList<Usuario> listaUsuarios;
-    private ArrayList<Sala> listaSalas;
-    private ArrayList<Reserva> listaReservas;
-    private File arquivoSalas, arquivoUsuarios, arquivoReservas;
 
-    public MenuController(ArrayList<Usuario> listaUsuarios, ArrayList<Sala> listaSalas, ArrayList<Reserva> listaReservas,
-                          File arquivoSalas, File arquivoUsuarios, File arquivoReservas) {
-        this.menuView = new MenuView();
-        this.listaUsuarios = listaUsuarios;
-        this.listaSalas = listaSalas;
-        this.listaReservas = listaReservas;
-        this.arquivoSalas = arquivoSalas;
-        this.arquivoUsuarios = arquivoUsuarios;
-        this.arquivoReservas = arquivoReservas;
+    private final MenuView menuView;
+    private final ArrayList<Usuario> listaUsuarios;
+    private final ArrayList<Sala> listaSalas;
+    private final ArrayList<Reserva> listaReservas;
 
-        this.menuView.getBtnCadastrarUsuario().addActionListener(e -> {
-            new CadastrarUsuarioController(menuView.getTela());
-        });
+    private final File arquivoSalas;
+    private final File arquivoUsuarios;
+    private final File arquivoReservas;
 
-        this.menuView.getBtnCadastrarReserva().addActionListener(e -> {
-            new CadastrarReservaController(menuView.getTela(), listaUsuarios, listaSalas, listaReservas,
-                                           arquivoSalas, arquivoUsuarios, arquivoReservas);
-        });
+    private final SalaDao salaDao;
+    private final UsuarioDao usuarioDao;
+    private final ReservaDao reservaDao;
 
-        this.menuView.getBtnCadastrarSala().addActionListener(e -> {
-            new CadastrarSalaController(menuView.getTela(), listaSalas, listaUsuarios, listaReservas,
-                                        arquivoSalas, arquivoUsuarios, arquivoReservas);
-        });
+    public MenuController() {
+        // Inicializa listas
+        listaUsuarios = new ArrayList<>();
+        listaSalas = new ArrayList<>();
+        listaReservas = new ArrayList<>();
 
-        this.menuView.getBtnCancelarReserva().addActionListener(e -> {
-            new CancelarReservaController(menuView.getTela(), listaUsuarios, listaSalas, listaReservas,
-                                        arquivoSalas, arquivoUsuarios, arquivoReservas);
-        });
+        // Arquivos
+        arquivoSalas = new File("codigo//codigos//Dao//arquivos//sala.txt");
+        arquivoUsuarios = new File("codigo//codigos//Dao//arquivos//usuarios.txt");
+        arquivoReservas = new File("codigo//codigos//Dao//arquivos//reservas.txt");
 
-        this.menuView.getBtnListarReservas().addActionListener(e -> {
-            if (listaReservas.isEmpty()) {
-                JOptionPane.showMessageDialog(menuView, "Nenhuma reserva cadastrada.");
-            } else {
-                StringBuilder sb = new StringBuilder();
-                for (Reserva r : listaReservas) {
-                    sb.append("Usuário: ").append(r.getUsuario().getNome()).append(" - CPF: ").append(r.getUsuario().getCpf())
-                      .append("\nSala: ").append(r.getSala().getCodigoSala())
-                      .append("\nInício: ").append(r.getDataInicio())
-                      .append("\nFim: ").append(r.getDataFim())
-                      .append("\n\n");
-                }
-                JTextArea area = new JTextArea(sb.toString());
-                area.setEditable(false);
-                JScrollPane scroll = new JScrollPane(area);
-                scroll.setPreferredSize(new java.awt.Dimension(500, 300));
-                JOptionPane.showMessageDialog(menuView, scroll, "Lista de Reservas", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        // DAOs
+        salaDao = new SalaDao();
+        usuarioDao = new UsuarioDao();
+        reservaDao = new ReservaDao();
 
-        // Listener do botão Gerar Relatório
-        this.menuView.getBtnGerarRelatorio().addActionListener(e -> {
-            RelatorioUtil.gerarRelatorioSalasMaisRentaveis(listaReservas);
-        });
+        // Carrega dados dos arquivos
+        carregarDados();
 
+        // Inicializa a view
+        menuView = new MenuView();
+
+        // Configura listeners para os botões da interface
+        configurarListeners();
+
+        // Mostra a interface
         menuView.setVisible(true);
+    }
+
+    private void carregarDados() {
+        try {
+            listaSalas.addAll(salaDao.carregar(arquivoSalas));
+            listaUsuarios.addAll(usuarioDao.carregar(arquivoUsuarios));
+            listaReservas.addAll(reservaDao.carregar(arquivoReservas, listaUsuarios, listaSalas));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                "Erro ao carregar dados: " + e.getMessage(),
+                "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void configurarListeners() {
+        menuView.getBtnCadastrarUsuario().addActionListener(e ->
+            new CadastrarUsuarioController(menuView.getTela())
+        );
+
+        menuView.getBtnCadastrarReserva().addActionListener(e ->
+            new CadastrarReservaController(menuView.getTela(), listaUsuarios, listaSalas, listaReservas,
+                    arquivoSalas, arquivoUsuarios, arquivoReservas)
+        );
+
+        menuView.getBtnCadastrarSala().addActionListener(e ->
+            new CadastrarSalaController(menuView.getTela(), listaSalas, listaUsuarios, listaReservas,
+                    arquivoSalas, arquivoUsuarios, arquivoReservas)
+        );
+
+        menuView.getBtnCancelarReserva().addActionListener(e ->
+            new CancelarReservaController(menuView.getTela(), listaUsuarios, listaSalas, listaReservas,
+                    arquivoSalas, arquivoUsuarios, arquivoReservas)
+        );
+
+        menuView.getBtnListarReservas().addActionListener(e ->
+            new ListarReservasController(menuView.getTela(), listaReservas)
+        );
+
+        menuView.getBtnGerarRelatorio().addActionListener(e -> 
+            new RelatorioController(menuView.getTela(), listaReservas)
+        );
     }
 }

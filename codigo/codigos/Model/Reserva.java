@@ -44,8 +44,8 @@ public class Reserva {
         return 0.0;
     }
 
-    public double calcularPreco(Reserva r) {
-        return sala.calcularPreco(r);
+    public double calcularPreco() {
+        return sala.calcularPreco(this);
     }
 
     public double removeReserva(ArrayList<Reserva> listaReservas) {

@@ -1,14 +1,14 @@
 package Controller;
 
-import Dao.Dados;
+import Dao.ReservaDao;
 import Model.Reserva;
-import Model.Usuario;
 import Model.Sala;
+import Model.Usuario;
 import View.CancelarReservaView;
-
-import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import javax.swing.*;
 
 public class CancelarReservaController {
 
@@ -17,6 +17,9 @@ public class CancelarReservaController {
     private ArrayList<Sala> listaSalas;
     private ArrayList<Reserva> listaReservas;
     private File arquivoSalas, arquivoUsuarios, arquivoReservas;
+
+    // DAO de reservas para salvar após cancelamento
+    private ReservaDao reservaDao;
 
     public CancelarReservaController(JDesktopPane desktopPane,
                                     ArrayList<Usuario> listaUsuarios,
@@ -31,6 +34,8 @@ public class CancelarReservaController {
         this.arquivoSalas = arquivoSalas;
         this.arquivoUsuarios = arquivoUsuarios;
         this.arquivoReservas = arquivoReservas;
+
+        this.reservaDao = new ReservaDao();
 
         cancelarReservaView = new CancelarReservaView();
         desktopPane.add(cancelarReservaView);
@@ -68,8 +73,9 @@ public class CancelarReservaController {
         double estorno = reservaEncontrada.removeReserva(listaReservas);
 
         try {
-            Dados.escritaArquivos(listaSalas, listaUsuarios, listaReservas, arquivoSalas, arquivoUsuarios, arquivoReservas);
-        } catch (Exception ex) {
+            // Usa DAO para salvar só as reservas, pois só elas mudaram
+            reservaDao.salvar(listaReservas, arquivoReservas);
+        } catch (IOException ex) {
             JOptionPane.showMessageDialog(cancelarReservaView, "Erro ao salvar dados: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }

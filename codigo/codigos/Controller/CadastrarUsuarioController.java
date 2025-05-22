@@ -1,55 +1,63 @@
-    /*
-     * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-     * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
-     */
-    package Controller;
+package Controller;
 
-    import Model.Endereco;
-    import Model.Usuario;
-    import View.CadastrarUsuarioView;
-    import java.util.ArrayList;
-    import javax.swing.JDesktopPane;
+import Dao.UsuarioDao;
+import Model.Endereco;
+import Model.Usuario;
+import View.CadastrarUsuarioView;
+import java.io.File;
+import java.util.ArrayList;
+import javax.swing.JDesktopPane;
+import javax.swing.JOptionPane;
 
-    /**
-     *
-     * @author 1529017
-     */
-    public class CadastrarUsuarioController {
-       private CadastrarUsuarioView cadastrarUsuario;
-       private ArrayList<Usuario> listaUsuarios = new ArrayList<>();
-       String caminhosUsuarios = "codigo//codigos//Dao//arquivos//usuarios.txt";
+public class CadastrarUsuarioController {
+    private final CadastrarUsuarioView cadastrarUsuario;
+    private ArrayList<Usuario> listaUsuarios;
+    private final String caminhosUsuarios = "codigo//codigos//Dao//arquivos//usuarios.txt";
+    private final File arquivoUsuarios = new File(caminhosUsuarios);
+    private final UsuarioDao usuarioDao;
 
-       public CadastrarUsuarioController(JDesktopPane tela){
-           this.cadastrarUsuario = new CadastrarUsuarioView();
-           tela.add(cadastrarUsuario);
+    public CadastrarUsuarioController(JDesktopPane tela) {
+        this.cadastrarUsuario = new CadastrarUsuarioView();
+        tela.add(cadastrarUsuario);
 
-           int x = (tela.getWidth() - cadastrarUsuario.getWidth()) /2;
-           int y = (tela.getHeight() - cadastrarUsuario.getHeight()) /2;
-           cadastrarUsuario.setLocation(x,y);
+        int x = (tela.getWidth() - cadastrarUsuario.getWidth()) / 2;
+        int y = (tela.getHeight() - cadastrarUsuario.getHeight()) / 2;
+        cadastrarUsuario.setLocation(x, y);
 
-           this.cadastrarUsuario.setVisible(true);
-           cadastrarUsuario.getBtnSalvar().addActionListener(e -> {
-              String nome = cadastrarUsuario.getLabelNome();
-              String cpf = cadastrarUsuario.getLabelCpf();
-              String cpe = cadastrarUsuario.getLabelCep();
-              String rua = cadastrarUsuario.getLabelRua();
-              String numero = cadastrarUsuario.getLabelNumero();
-              String cidade = cadastrarUsuario.getLabelCidade();
-              String pais  = cadastrarUsuario.getLabelPais();
+        this.usuarioDao = new UsuarioDao();
 
-              Endereco endereco = new Endereco(cpe,rua,numero,cidade,pais);
+        cadastrarUsuario.setVisible(true);
 
-              Usuario usuario = new Usuario(nome,cpf,endereco,false);
-              listaUsuarios.add(usuario);
-              boolean sucesso = Usuario.salvarUsuariosNoArquivo(listaUsuarios, caminhosUsuarios);
+        cadastrarUsuario.getBtnSalvar().addActionListener(e -> {
+            try {
+                // Carrega os usuários existentes para manter os dados antigos
+                listaUsuarios = (ArrayList<Usuario>) usuarioDao.carregar(arquivoUsuarios);
+            } catch (Exception ex) {
+                // Se não conseguir carregar, inicializa lista vazia para não travar
+                listaUsuarios = new ArrayList<>();
+            }
 
-               if (sucesso) {
-               javax.swing.JOptionPane.showMessageDialog(cadastrarUsuario, "Cadastro salvo com sucesso!");
-               cadastrarUsuario.dispose();
-               } else {
-               javax.swing.JOptionPane.showMessageDialog(cadastrarUsuario, "Erro ao salvar cadastro.", "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
-               }
-           });
-       }
+            String nome = cadastrarUsuario.getLabelNome();
+            String cpf = cadastrarUsuario.getLabelCpf();
+            String cep = cadastrarUsuario.getLabelCep();
+            String rua = cadastrarUsuario.getLabelRua();
+            String numero = cadastrarUsuario.getLabelNumero();
+            String cidade = cadastrarUsuario.getLabelCidade();
+            String pais = cadastrarUsuario.getLabelPais();
 
+            Endereco endereco = new Endereco(cep, rua, numero, cidade, pais);
+            Usuario usuario = new Usuario(nome, cpf, endereco, false);
+
+            listaUsuarios.add(usuario);
+
+            try {
+                usuarioDao.salvar(listaUsuarios, arquivoUsuarios);
+                JOptionPane.showMessageDialog(cadastrarUsuario, "Cadastro salvo com sucesso!");
+                cadastrarUsuario.dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(cadastrarUsuario, "Erro ao salvar cadastro: " + ex.getMessage(),
+                        "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
+}
