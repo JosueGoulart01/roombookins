@@ -78,8 +78,4 @@ public class Endereco {
     private boolean validarPais(String pais) {
         return pais != null && !pais.isEmpty();
     }
-
-    public String escritaArquivo(){
-        return cep + ";" + rua + ";" + numero + ";" + cidade + ";" + pais;
-    }
 }

@@ -1,96 +1,94 @@
 package Controller;
 
 import Dao.ReservaDao;
-import Model.*;
+import Dao.SalaDao;
+import Dao.UsuarioDao;
+import Model.Reserva;
+import Model.Sala;
+import Model.Usuario;
+import Service.ReservaService;
 import View.CadastrarReservaView;
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+
 import javax.swing.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class CadastrarReservaController {
-    private CadastrarReservaView cadastrarReservaView;
-    private ArrayList<Reserva> listaReservas;
-    private ArrayList<Usuario> listaUsuarios;
-    private ArrayList<Sala> listaSalas;
-    private File arquivoSalas, arquivoUsuarios, arquivoReservas;
 
-    // DAO para reservas
-    private ReservaDao reservaDao;
+    private final CadastrarReservaView view;
+    private final ArrayList<Reserva> listaReservas;
+    private final ArrayList<Usuario> listaUsuarios;
+    private final ArrayList<Sala> listaSalas;
 
-    public CadastrarReservaController(JDesktopPane tela, ArrayList<Usuario> listaUsuarios, ArrayList<Sala> listaSalas,
-                                     ArrayList<Reserva> listaReservas, File arquivoSalas, File arquivoUsuarios, File arquivoReservas) {
-        this.listaReservas = listaReservas;
+    private final UsuarioDao usuarioDao = new UsuarioDao();
+    private final SalaDao salaDao = new SalaDao();
+    private final ReservaDao reservaDao = new ReservaDao();
+    private final ReservaService reservaService = new ReservaService(reservaDao);
+
+    public CadastrarReservaController(JDesktopPane tela,
+                                      ArrayList<Usuario> listaUsuarios,
+                                      ArrayList<Sala> listaSalas,
+                                      ArrayList<Reserva> listaReservas) {
         this.listaUsuarios = listaUsuarios;
         this.listaSalas = listaSalas;
-        this.arquivoSalas = arquivoSalas;
-        this.arquivoUsuarios = arquivoUsuarios;
-        this.arquivoReservas = arquivoReservas;
+        this.listaReservas = listaReservas;
 
-        this.reservaDao = new ReservaDao(); // inicializa DAO de reserva
+        carregarDados();
 
-        cadastrarReservaView = new CadastrarReservaView();
-        tela.add(cadastrarReservaView);
+        this.view = new CadastrarReservaView();
+        tela.add(view);
 
-        int x = (tela.getWidth() - cadastrarReservaView.getWidth()) / 2;
-        int y = (tela.getHeight() - cadastrarReservaView.getHeight()) / 2;
-        cadastrarReservaView.setLocation(x, y);
+        int x = (tela.getWidth() - view.getWidth()) / 2;
+        int y = (tela.getHeight() - view.getHeight()) / 2;
+        view.setLocation(x, y);
 
-        cadastrarReservaView.getBtnSalvar().addActionListener(e -> salvarReserva());
+        view.getBtnSalvar().addActionListener(e -> salvarReserva());
 
-        cadastrarReservaView.setVisible(true);
+        view.setVisible(true);
+    }
+
+    private void carregarDados() {
+        try {
+            if (listaUsuarios.isEmpty()) {
+                listaUsuarios.addAll(usuarioDao.carregar());
+            }
+            if (listaSalas.isEmpty()) {
+                listaSalas.addAll(salaDao.carregar());
+            }
+            listaReservas.clear();
+            listaReservas.addAll(reservaService.carregarReservas(listaUsuarios, listaSalas));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao carregar dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 
     private void salvarReserva() {
-        String cpf = cadastrarReservaView.getTxtCpfUsuario().getText();
-        String codigoSala = cadastrarReservaView.getTxtCodigoSala().getText();
-        String inicio = cadastrarReservaView.getTxtDataInicio().getText();
-        String fim = cadastrarReservaView.getTxtDataFim().getText();
-
-        Usuario usuario = listaUsuarios.stream()
-                .filter(u -> u.getCpf().equals(cpf))
-                .findFirst()
-                .orElse(null);
-
-        Sala sala = listaSalas.stream()
-                .filter(s -> s.getCodigoSala().equals(codigoSala))
-                .findFirst()
-                .orElse(null);
-
-        if (usuario == null || sala == null) {
-            JOptionPane.showMessageDialog(cadastrarReservaView, "Usuário ou Sala não encontrados.");
-            return;
-        }
+        String cpf = view.getTxtCpfUsuario().getText().trim();
+        String codigoSala = view.getTxtCodigoSala().getText().trim();
+        String inicio = view.getTxtDataInicio().getText().trim();
+        String fim = view.getTxtDataFim().getText().trim();
 
         try {
-            LocalDateTime dataInicio = LocalDateTime.parse(inicio);
-            LocalDateTime dataFim = LocalDateTime.parse(fim);
+            reservaService.validarCamposObrigatorios(cpf, codigoSala, inicio, fim);
 
-            Reserva reserva = new Reserva(usuario, sala, dataInicio, dataFim);
+            Usuario usuario = listaUsuarios.stream().filter(u -> u.getCpf().equals(cpf)).findFirst().orElse(null);
+            Sala sala = listaSalas.stream().filter(s -> s.getCodigoSala().equals(codigoSala)).findFirst().orElse(null);
 
-            if (!sala.verificarHorario(listaReservas, reserva)) {
-                JOptionPane.showMessageDialog(cadastrarReservaView, "Sala já está reservada neste horário.");
-                return;
-            }
+            reservaService.validarUsuarioESala(usuario, sala);
 
-            listaReservas.add(reserva);
+            Reserva reserva = reservaService.criarReserva(usuario, sala, inicio, fim);
+            reservaService.salvarReserva(reserva, listaReservas);
 
-            // Usando DAO para salvar reservas no arquivo
-            reservaDao.salvar(listaReservas, arquivoReservas);
-
-            JOptionPane.showMessageDialog(cadastrarReservaView,
-                    "Reserva cadastrada com sucesso!\nPreço: " + reserva.calcularPreco());
-            cadastrarReservaView.dispose();
+            JOptionPane.showMessageDialog(view, "Reserva cadastrada com sucesso!\nPreço: " + reserva.calcularPreco());
+            view.dispose();
 
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(cadastrarReservaView, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(cadastrarReservaView,
-                    "Erro ao salvar arquivo de reservas: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(view, "Erro ao salvar no banco de dados: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(cadastrarReservaView,
-                    "Erro ao cadastrar reserva. Verifique os dados.", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Erro inesperado: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

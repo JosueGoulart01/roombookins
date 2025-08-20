@@ -1,6 +1,10 @@
 # Diagramas de classe
 Coloque aqui todas as versões do seu diagrama de classes. Cada versão deve começar com um número de dois dígitos, na ordem crescente.
 
+# VERSÃO FINAL
+![image](https://github.com/pucmg-aulas/roombookings-g2-manha-quintetofantastico/blob/master/docs/diagramas/diagramas.png/Xulambs%20Rooms.drawio-%20versaoFinal.png)
+
+
 Versão 01
 
 ![image](https://github.com/pucmg-aulas/roombookings-g2-manha-quintetofantastico/blob/master/docs/diagramas/diagramas.png/Xulambs-Rooms.drawio-01.png)

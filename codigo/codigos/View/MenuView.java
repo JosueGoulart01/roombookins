@@ -10,6 +10,8 @@ public class MenuView extends JFrame {
     private JMenuItem btnCancelarReserva;
     private JMenuItem btnListarReservas;
     private JMenuItem btnGerarRelatorio;
+    private JMenuItem btnListarUsuarios;
+    private JMenuItem btnListarSalas;
     private JDesktopPane desktopPane;
     private JLabel tituloLabel;
 
@@ -40,6 +42,8 @@ public class MenuView extends JFrame {
         btnCadastrarSala = new JMenuItem("Cadastrar Sala");
         btnCancelarReserva = new JMenuItem("Cancelar Reserva");
         btnListarReservas = new JMenuItem("Listar Reservas");
+        btnListarUsuarios = new JMenuItem("Listar Usuários");
+        btnListarSalas = new JMenuItem("Listar Salas");
         btnGerarRelatorio = new JMenuItem("Gerar Relatório");
 
         menu.add(btnCadastrarUsuario);
@@ -47,6 +51,8 @@ public class MenuView extends JFrame {
         menu.add(btnCadastrarSala);
         menu.add(btnCancelarReserva);
         menu.add(btnListarReservas);
+        menu.add(btnListarUsuarios);
+        menu.add(btnListarSalas);
         menu.add(btnGerarRelatorio);
 
         menuBar.add(menu);
@@ -78,8 +84,15 @@ public class MenuView extends JFrame {
         return btnGerarRelatorio;
     }
 
+    public JMenuItem getBtnListarUsuarios() {
+        return btnListarUsuarios;
+    }
+
+    public JMenuItem getBtnListarSalas() {
+        return btnListarSalas;
+    }
+
     public JDesktopPane getTela() {
         return desktopPane;
     }
-
 }

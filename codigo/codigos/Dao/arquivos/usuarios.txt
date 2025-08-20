@@ -5,3 +5,6 @@ joao vitor;1111;339231;rua 1111;2323;bh;br;false
 ssss;111.111.111-11;22222-222;jjj;1;2;3;false
 jose reis;222.222.222-22;31231-313;rua br20;20;bh;br;false
 erlane;030.006.106-42;33925-460;walter;116;bh;brasil;false
+paulo;123.456.789-12;31312-312;maria jose;1;sao paulo;brasil;false
+kaike;111.111.111-11;31231-231;rua mariia;10;bh;brasil;false
+res;000.000.000-00;21331-312;eqw;312;132;132;false

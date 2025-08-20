@@ -55,7 +55,7 @@ public class RelatorioTotalArrecadadoView extends JInternalFrame {
         resultadoLabel.setBounds(100, 260, 400, 30);
         add(resultadoLabel);
     }
-
+    
     // Getters para o Controller acessar
     public JTextField getDataInicioField() {
         return dataInicioField;

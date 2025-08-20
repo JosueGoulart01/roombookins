@@ -1,10 +1,5 @@
 package Model;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-
 public class Usuario {
 
     private String nome;
@@ -65,35 +60,5 @@ public class Usuario {
     public void setEndereco(Endereco endereco) {
         this.endereco = endereco;
     }
-    
-    public String escritaArquivo() {
-        if (convidado) {
-            return nome + ";" + true;
-        } else {
-            return nome + ";" + cpf + ";" +
-                   endereco.getCep() + ";" + endereco.getRua() + ";" +
-                   endereco.getNumero() + ";" + endereco.getCidade() + ";" +
-                   endereco.getPais() + ";" + corporativo;
-        }
-    }
 
-    public static boolean salvarUsuariosNoArquivo(ArrayList<Usuario> listaUsuarios, String caminhoArquivo) {
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(caminhoArquivo, true))) {
-        for (Usuario usuario : listaUsuarios) {
-            String linha = usuario.getNome() + ";" +
-                           usuario.getCpf() + ";" +
-                           usuario.getEndereco().getCep() + ";" +
-                           usuario.getEndereco().getRua() + ";" +
-                           usuario.getEndereco().getNumero() + ";" +
-                           usuario.getEndereco().getCidade() + ";" +
-                           usuario.getEndereco().getPais() + ";" +
-                           usuario.isCorporativo() + System.lineSeparator();
-            writer.write(linha);
-        }
-        return true; // salvou com sucesso
-    } catch (IOException e) {
-        System.out.println("Erro ao salvar no arquivo: " + e.getMessage());
-        return false; // erro ao salvar
-    }
-}
 }

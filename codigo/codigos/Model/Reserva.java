@@ -28,6 +28,10 @@ public class Reserva {
         return dataInicio;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public LocalDateTime getDataFim() {
         return dataFim;
     }
@@ -59,9 +63,5 @@ public class Reserva {
 
         listaReservas.remove(this);
         return valorRembolso;
-    }
-
-    public String escritaArquivo() {
-        return id + ";" + usuario.getCpf() + ";" + sala.getCodigoSala() + ";" + dataInicio + ";" + dataFim;
     }
 }

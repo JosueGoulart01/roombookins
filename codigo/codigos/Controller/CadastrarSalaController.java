@@ -2,85 +2,77 @@ package Controller;
 
 import Dao.SalaDao;
 import Model.*;
+import Service.SalaService;
 import View.CadastrarSalaView;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.*;
 
 public class CadastrarSalaController {
-    private CadastrarSalaView cadastrarSalaView;
-    private ArrayList<Sala> listaSalas;
-    private ArrayList<Usuario> listaUsuarios;
-    private ArrayList<Reserva> listaReservas;
-    private File arquivoSalas, arquivoUsuarios, arquivoReservas;
 
-    // DAOs modulares
-    private SalaDao salaDao;
+    private final CadastrarSalaView view;
+    private final ArrayList<Sala> listaSalas;
+    private final SalaService salaService;
 
-    public CadastrarSalaController(JDesktopPane tela, ArrayList<Sala> listaSalas, ArrayList<Usuario> listaUsuarios,
-                                   ArrayList<Reserva> listaReservas, File arquivoSalas, File arquivoUsuarios, File arquivoReservas) {
+    public CadastrarSalaController(JDesktopPane tela,
+                                   ArrayList<Sala> listaSalas,
+                                   ArrayList<Usuario> listaUsuarios,
+                                   ArrayList<Reserva> listaReservas) {
         this.listaSalas = listaSalas;
-        this.listaUsuarios = listaUsuarios;
-        this.listaReservas = listaReservas;
-        this.arquivoSalas = arquivoSalas;
-        this.arquivoUsuarios = arquivoUsuarios;
-        this.arquivoReservas = arquivoReservas;
+        this.salaService = new SalaService(new SalaDao());
 
-        this.salaDao = new SalaDao(); 
+        view = new CadastrarSalaView();
+        tela.add(view);
 
-        cadastrarSalaView = new CadastrarSalaView();
-        tela.add(cadastrarSalaView);
+        int x = (tela.getWidth() - view.getWidth()) / 2;
+        int y = (tela.getHeight() - view.getHeight()) / 2;
+        view.setLocation(x, y);
 
-        int x = (tela.getWidth() - cadastrarSalaView.getWidth()) / 2;
-        int y = (tela.getHeight() - cadastrarSalaView.getHeight()) / 2;
-        cadastrarSalaView.setLocation(x, y);
+        carregarSalas();
+        view.getBtnSalvar().addActionListener(e -> salvarSala());
+        view.setVisible(true);
+    }
 
-        cadastrarSalaView.getBtnSalvar().addActionListener(e -> salvarSala());
+    private void carregarSalas() {
+        try {
+            salaService.carregarSalasSeNecessario(listaSalas);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Erro ao carregar salas: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-        cadastrarSalaView.setVisible(true);
+    private Endereco criarEndereco() {
+        return new Endereco(
+                view.getTxtCep().getText().trim(),
+                view.getTxtRua().getText().trim(),
+                view.getTxtNumero().getText().trim(),
+                view.getTxtCidade().getText().trim(),
+                view.getTxtPais().getText().trim()
+        );
     }
 
     private void salvarSala() {
-        String codigo = cadastrarSalaView.getTxtCodigoSala().getText();
-        int capacidade;
-        try {
-            capacidade = Integer.parseInt(cadastrarSalaView.getTxtCapacidade().getText());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(cadastrarSalaView, "Capacidade deve ser um número válido!", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String tipoSala = (String) cadastrarSalaView.getComboTipo().getSelectedItem();
-        int tipo = tipoSala.equals("Premium") ? 1 : tipoSala.equals("Vip") ? 2 : 3;
-
-        Endereco endereco = new Endereco(
-            cadastrarSalaView.getTxtCep().getText(),
-            cadastrarSalaView.getTxtRua().getText(),
-            cadastrarSalaView.getTxtNumero().getText(),
-            cadastrarSalaView.getTxtCidade().getText(),
-            cadastrarSalaView.getTxtPais().getText()
-        );
+        String codigo = view.getTxtCodigoSala().getText().trim();
+        String capacidadeStr = view.getTxtCapacidade().getText().trim();
+        String tipoSalaNome = (String) view.getComboTipo().getSelectedItem();
+        Endereco endereco = criarEndereco();
 
         try {
-            Sala sala;
-            switch (tipo) {
-                case 1 -> sala = new SalaPremium(codigo, capacidade, tipo, endereco);
-                case 2 -> sala = new SalaVip(codigo, capacidade, tipo, endereco);
-                case 3 -> sala = new SalaStandard(codigo, capacidade, tipo, endereco);
-                default -> throw new IllegalArgumentException("Tipo de sala inválido");
-            }
+            salaService.validarCamposObrigatorios(codigo, capacidadeStr, endereco, tipoSalaNome);
+            int capacidade = salaService.converterCapacidade(capacidadeStr);
+            int tipo = salaService.obterTipoPorNome(tipoSalaNome);
+            Sala novaSala = salaService.criarSala(codigo, capacidade, tipo, endereco);
 
-            listaSalas.add(sala);
+            listaSalas.add(novaSala);
+            salaService.salvarSalas(listaSalas);
 
-            salaDao.salvar(listaSalas, arquivoSalas);
+            JOptionPane.showMessageDialog(view,
+                    "Sala cadastrada com sucesso!\nRecursos: " +
+                            novaSala.getRecursos().stream().map(Recurso::getNome).toList());
 
-            JOptionPane.showMessageDialog(cadastrarSalaView, "Sala cadastrada com sucesso!");
-            cadastrarSalaView.dispose();
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(cadastrarSalaView, "Erro ao salvar arquivo: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(cadastrarSalaView, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            view.dispose();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

@@ -1,86 +1,73 @@
 package Controller;
 
-import Dao.ReservaDao;
 import Model.Reserva;
 import Model.Sala;
 import Model.Usuario;
+import Service.CancelarReservaService;
 import View.CancelarReservaView;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class CancelarReservaController {
 
-    private CancelarReservaView cancelarReservaView;
-    private ArrayList<Usuario> listaUsuarios;
-    private ArrayList<Sala> listaSalas;
-    private ArrayList<Reserva> listaReservas;
-    private File arquivoSalas, arquivoUsuarios, arquivoReservas;
-
-    // DAO de reservas para salvar após cancelamento
-    private ReservaDao reservaDao;
+    private final CancelarReservaView view;
+    private final CancelarReservaService service;
+    private final HashMap<String, Reserva> mapaReservas = new HashMap<>();
 
     public CancelarReservaController(JDesktopPane desktopPane,
-                                    ArrayList<Usuario> listaUsuarios,
-                                    ArrayList<Sala> listaSalas,
-                                    ArrayList<Reserva> listaReservas,
-                                    File arquivoSalas,
-                                    File arquivoUsuarios,
-                                    File arquivoReservas) {
-        this.listaUsuarios = listaUsuarios;
-        this.listaSalas = listaSalas;
-        this.listaReservas = listaReservas;
-        this.arquivoSalas = arquivoSalas;
-        this.arquivoUsuarios = arquivoUsuarios;
-        this.arquivoReservas = arquivoReservas;
+                                     ArrayList<Usuario> listaUsuarios,
+                                     ArrayList<Sala> listaSalas,
+                                     ArrayList<Reserva> listaReservas) {
+        this.view = new CancelarReservaView();
+        this.service = new CancelarReservaService(listaUsuarios, listaSalas, listaReservas);
 
-        this.reservaDao = new ReservaDao();
+        service.carregarDados();
 
-        cancelarReservaView = new CancelarReservaView();
-        desktopPane.add(cancelarReservaView);
-        cancelarReservaView.setVisible(true);
-        cancelarReservaView.setLocation(
-            (desktopPane.getWidth() - cancelarReservaView.getWidth()) / 2,
-            (desktopPane.getHeight() - cancelarReservaView.getHeight()) / 2
+        desktopPane.add(view);
+        view.setVisible(true);
+        view.setLocation(
+                (desktopPane.getWidth() - view.getWidth()) / 2,
+                (desktopPane.getHeight() - view.getHeight()) / 2
         );
 
-        cancelarReservaView.getBtnCancelar().addActionListener(e -> cancelarReserva());
-    }
+        view.getBtnBuscar().addActionListener(e -> {
+            String cpf = view.getCpf();
+            ArrayList<Reserva> reservasUsuario = service.buscarReservasPorCpf(cpf);
+            DefaultListModel<String> modelo = new DefaultListModel<>();
+            mapaReservas.clear();
 
-    private void cancelarReserva() {
-        String cpf = cancelarReservaView.getCpf();
-        String codigoSala = cancelarReservaView.getCodigoSala();
-
-        if (cpf.isEmpty() || codigoSala.isEmpty()) {
-            JOptionPane.showMessageDialog(cancelarReservaView, "Informe CPF e Código da Sala.", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        Reserva reservaEncontrada = null;
-        for (Reserva r : listaReservas) {
-            if (r.getUsuario().getCpf().equals(cpf) && r.getSala().getCodigoSala().equals(codigoSala)) {
-                reservaEncontrada = r;
-                break;
+            for (Reserva r : reservasUsuario) {
+                String chave = r.getSala().getCodigoSala() + " - " + r.getDataInicio();
+                modelo.addElement(chave);
+                mapaReservas.put(chave, r);
             }
-        }
 
-        if (reservaEncontrada == null) {
-            JOptionPane.showMessageDialog(cancelarReservaView, "Nenhuma reserva encontrada para o CPF e código da sala informados.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+            view.atualizarListaReservas(modelo);
 
-        double estorno = reservaEncontrada.removeReserva(listaReservas);
+            if (modelo.isEmpty()) {
+                JOptionPane.showMessageDialog(view, "Nenhuma reserva encontrada para o CPF informado.");
+            }
+        });
 
-        try {
-            // Usa DAO para salvar só as reservas, pois só elas mudaram
-            reservaDao.salvar(listaReservas, arquivoReservas);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(cancelarReservaView, "Erro ao salvar dados: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        view.getBtnCancelar().addActionListener(e -> {
+            String selecionada = view.getReservaSelecionada();
+            if (selecionada == null) {
+                JOptionPane.showMessageDialog(view, "Selecione uma reserva para cancelar.");
+                return;
+            }
 
-        JOptionPane.showMessageDialog(cancelarReservaView, "Reserva cancelada com sucesso!\nValor do estorno: R$ " + estorno);
-        cancelarReservaView.dispose();
+            Reserva reserva = mapaReservas.get(selecionada);
+            double estorno = service.cancelarReserva(reserva);
+            if (estorno >= 0) {
+                JOptionPane.showMessageDialog(view,
+                        String.format("Reserva cancelada!\nEstorno: R$ %.2f", estorno));
+                view.getBtnBuscar().doClick(); // Atualiza a lista
+            } else {
+                JOptionPane.showMessageDialog(view,
+                        "Erro ao cancelar a reserva.", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 }
