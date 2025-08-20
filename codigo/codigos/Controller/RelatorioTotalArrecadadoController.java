@@ -1,40 +1,27 @@
 package Controller;
 
-import Dao.ReservaDao;
 import Model.Reserva;
-import Model.Sala;
-import Model.Usuario;
 import Service.RelatorioService;
 import View.RelatorioTotalArrecadadoView;
-
-import javax.swing.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
 
 public class RelatorioTotalArrecadadoController {
 
     private final RelatorioTotalArrecadadoView view;
-    private final ReservaDao reservaDao;
-    private final ArrayList<Reserva> listaReservas;
-    private final ArrayList<Usuario> listaUsuarios;
-    private final ArrayList<Sala> listaSalas;
-    private final RelatorioService relatorioService;
+    private final RelatorioService service;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public RelatorioTotalArrecadadoController(JDesktopPane desktopPane) {
+    public RelatorioTotalArrecadadoController(JDesktopPane desktopPane, RelatorioService service) {
         this.view = new RelatorioTotalArrecadadoView();
-        this.listaReservas = new ArrayList<>();
-        this.listaUsuarios = new ArrayList<>();
-        this.listaSalas = new ArrayList<>();
-        this.reservaDao = new ReservaDao();
-        this.relatorioService = new RelatorioService(listaReservas, listaUsuarios, listaSalas);
+        this.service = service;
 
-        relatorioService.carregarDados();
+        service.carregarDados();  // garante que usuários, salas e reservas já estão carregados
 
         desktopPane.add(view);
         view.setVisible(true);
@@ -64,13 +51,14 @@ public class RelatorioTotalArrecadadoController {
                 return;
             }
 
-            List<Reserva> reservasFiltradas = reservaDao.buscarReservasNoPeriodo(inicio, fim, listaUsuarios, listaSalas);
+            // agora usamos apenas o service
+            List<Reserva> reservasFiltradas = service.buscarReservasNoPeriodo(inicio, fim);
 
-double total = reservasFiltradas.stream()
-        .mapToDouble(Reserva::calcularPreco)
-        .sum();
+            double total = reservasFiltradas.stream()
+                    .mapToDouble(Reserva::calcularPreco)
+                    .sum();
 
-view.setResultado(String.format("Total arrecadado: R$ %.2f", total));   
+            view.setResultado(String.format("Total arrecadado: R$ %.2f", total));
 
         } catch (DateTimeParseException ex) {
             JOptionPane.showMessageDialog(view,

@@ -1,7 +1,7 @@
 package Controller;
 
-import Dao.ReservaDao;
 import Model.Usuario;
+import Service.RelatorioService;
 import View.RelatorioMediaHorasPorClienteView;
 import java.util.Map;
 import javax.swing.*;
@@ -9,9 +9,12 @@ import javax.swing.*;
 public class RelatorioMediaHorasPorClienteController {
 
     private RelatorioMediaHorasPorClienteView view;
+    private RelatorioService service;
 
-    public RelatorioMediaHorasPorClienteController(JDesktopPane desktopPane) {
+    public RelatorioMediaHorasPorClienteController(JDesktopPane desktopPane,
+                                                   RelatorioService service) {
         this.view = new RelatorioMediaHorasPorClienteView();
+        this.service = service;
 
         desktopPane.add(view);
         view.setVisible(true);
@@ -25,8 +28,7 @@ public class RelatorioMediaHorasPorClienteController {
 
     private void gerarRelatorio() {
         try {
-            ReservaDao dao = new ReservaDao();
-            Map<Usuario, Double> medias = dao.calcularMediaHorasPorCliente();
+            Map<Usuario, Double> medias = service.obterMediaHorasPorCliente();
 
             if (medias.isEmpty()) {
                 view.exibirMensagem("Nenhuma reserva encontrada.");

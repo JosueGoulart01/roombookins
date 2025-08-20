@@ -1,19 +1,23 @@
 package Dao;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import Model.Reserva;
 import Model.Sala;
 import Model.Usuario;
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.*;
 
 public class RelatorioDao {
+    private Connection cn;
+
+    public RelatorioDao() {
+        BancoDados.getInstancia();
+        cn = BancoDados.getConexao();
+    }
+
+    // ----------------------------
+    // 1) Média de horas por cliente
+    // ----------------------------
     public Map<Usuario, Double> calcularMediaHorasPorCliente() throws SQLException {
         Map<Usuario, Double> resultado = new HashMap<>();
 
@@ -35,7 +39,7 @@ public class RelatorioDao {
                 long totalReservas = rs.getLong("totalReservas");
 
                 Usuario usuario = new Usuario(nome, cpf, null, false);
-                double media = totalHoras / totalReservas;
+                double media = (totalReservas > 0) ? totalHoras / totalReservas : 0;
 
                 resultado.put(usuario, media);
             }
@@ -44,6 +48,9 @@ public class RelatorioDao {
         return resultado;
     }
 
+    // ----------------------------
+    // 2) Reservas agrupadas por sala
+    // ----------------------------
     public Map<String, Long> calcularReservasPorSala(int mes, int ano) throws SQLException {
         Map<String, Long> resultado = new HashMap<>();
 
@@ -67,43 +74,58 @@ public class RelatorioDao {
         return resultado;
     }
 
+    // ----------------------------
+    // 3) Reservas em um período
+    // ----------------------------
     public List<Reserva> buscarReservasNoPeriodo(LocalDateTime inicio, LocalDateTime fim,
-                                             List<Usuario> usuarios, List<Sala> salas) throws SQLException {
-    List<Reserva> reservas = new ArrayList<>();
+                                                 List<Usuario> usuarios, List<Sala> salas) throws SQLException {
+        List<Reserva> reservas = new ArrayList<>();
 
-    String sql = """
-        SELECT * FROM Reserva
-        WHERE dataInicio <= ? AND dataFim >= ?
-    """;
+        String sql = """
+            SELECT * FROM Reserva
+            WHERE dataInicio <= ? AND dataFim >= ?
+        """;
 
-    try (PreparedStatement ps = cn.prepareStatement(sql)) {
-        ps.setTimestamp(1, Timestamp.valueOf(fim));
-        ps.setTimestamp(2, Timestamp.valueOf(inicio));
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.valueOf(fim));
+            ps.setTimestamp(2, Timestamp.valueOf(inicio));
 
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            int id = rs.getInt("id");
-            String cpf = rs.getString("cpf");
-            String codigoSala = rs.getString("codigoSala");
-            LocalDateTime dataInicio = rs.getTimestamp("dataInicio").toLocalDateTime();
-            LocalDateTime dataFim = rs.getTimestamp("dataFim").toLocalDateTime();
-
-            Usuario usuario = usuarios.stream()
-                    .filter(u -> u.getCpf().equals(cpf))
-                    .findFirst().orElse(null);
-
-            Sala sala = salas.stream()
-                    .filter(s -> s.getCodigoSala().equals(codigoSala))
-                    .findFirst().orElse(null);
-
-            if (usuario != null && sala != null) {
-                Reserva reserva = new Reserva(usuario, sala, dataInicio, dataFim);
-                reserva.setId(id);
-                reservas.add(reserva);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Reserva reserva = montarReserva(rs, usuarios, salas);
+                if (reserva != null) {
+                    reservas.add(reserva);
+                }
             }
         }
+
+        return reservas;
     }
 
-    return reservas;
-}
+    // ----------------------------
+    // Método auxiliar para criar objeto Reserva
+    // ----------------------------
+    private Reserva montarReserva(ResultSet rs, List<Usuario> usuarios, List<Sala> salas) throws SQLException {
+        int id = rs.getInt("id");
+        String cpf = rs.getString("cpf");
+        String codigoSala = rs.getString("codigoSala");
+        LocalDateTime dataInicio = rs.getTimestamp("dataInicio").toLocalDateTime();
+        LocalDateTime dataFim = rs.getTimestamp("dataFim").toLocalDateTime();
+
+        Usuario usuario = usuarios.stream()
+                .filter(u -> u.getCpf().equals(cpf))
+                .findFirst().orElse(null);
+
+        Sala sala = salas.stream()
+                .filter(s -> s.getCodigoSala().equals(codigoSala))
+                .findFirst().orElse(null);
+
+        if (usuario != null && sala != null) {
+            Reserva reserva = new Reserva(usuario, sala, dataInicio, dataFim);
+            reserva.setId(id);
+            return reserva;
+        }
+
+        return null;
+    }
 }

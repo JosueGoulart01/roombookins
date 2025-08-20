@@ -1,6 +1,7 @@
 package Service;
 
 import Dao.RelatorioDao;
+import Dao.ReservaDao;
 import Dao.SalaDao;
 import Dao.UsuarioDao;
 import Model.Reserva;
@@ -19,6 +20,7 @@ public class RelatorioService {
 
     private final UsuarioDao usuarioDao = new UsuarioDao();
     private final SalaDao salaDao = new SalaDao();
+    private final ReservaDao reservaDao = new ReservaDao();
     private final RelatorioDao relatorioDao = new RelatorioDao();
 
     public RelatorioService(ArrayList<Reserva> listaReservas,
@@ -29,6 +31,9 @@ public class RelatorioService {
         this.listaSalas = listaSalas;
     }
 
+    // ----------------------------
+    // Carrega todos os dados do banco
+    // ----------------------------
     public void carregarDados() {
         try {
             if (listaUsuarios.isEmpty()) {
@@ -37,12 +42,18 @@ public class RelatorioService {
             if (listaSalas.isEmpty()) {
                 listaSalas.addAll(salaDao.carregar());
             }
+            if (listaReservas.isEmpty()) {
+                listaReservas.addAll(reservaDao.carregar(listaUsuarios, listaSalas));
+            }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao carregar dados: " + e.getMessage(),
                     "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    // ----------------------------
+    // 1) Média de horas por cliente
+    // ----------------------------
     public Map<Usuario, Double> obterMediaHorasPorCliente() {
         try {
             return relatorioDao.calcularMediaHorasPorCliente();
@@ -53,6 +64,9 @@ public class RelatorioService {
         }
     }
 
+    // ----------------------------
+    // 2) Reservas por sala em mês/ano
+    // ----------------------------
     public Map<String, Long> obterReservasPorSala(int mes, int ano) {
         try {
             return relatorioDao.calcularReservasPorSala(mes, ano);
@@ -63,6 +77,9 @@ public class RelatorioService {
         }
     }
 
+    // ----------------------------
+    // 3) Reservas em período
+    // ----------------------------
     public List<Reserva> buscarReservasNoPeriodo(LocalDateTime inicio, LocalDateTime fim) {
         try {
             return relatorioDao.buscarReservasNoPeriodo(inicio, fim, listaUsuarios, listaSalas);

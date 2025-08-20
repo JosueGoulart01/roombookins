@@ -1,16 +1,18 @@
 package Controller;
 
-import Dao.ReservaDao;
+import Service.RelatorioService;
 import View.RelatorioSalasMaisReservadasView;
 import java.util.Map;
 import javax.swing.*;
 
 public class RelatorioSalasMaisReservadasController {
 
-    private RelatorioSalasMaisReservadasView view;
+    private final RelatorioSalasMaisReservadasView view;
+    private final RelatorioService service;
 
-    public RelatorioSalasMaisReservadasController(JDesktopPane desktopPane) {
+    public RelatorioSalasMaisReservadasController(JDesktopPane desktopPane, RelatorioService service) {
         this.view = new RelatorioSalasMaisReservadasView();
+        this.service = service;
 
         desktopPane.add(view);
         view.setVisible(true);
@@ -27,8 +29,7 @@ public class RelatorioSalasMaisReservadasController {
             int mesSelecionado = view.getMesSelecionado();
             int anoSelecionado = view.getAnoSelecionado();
 
-            ReservaDao dao = new ReservaDao();
-            Map<String, Long> reservasPorSala = dao.calcularReservasPorSala(mesSelecionado, anoSelecionado);
+            Map<String, Long> reservasPorSala = service.obterReservasPorSala(mesSelecionado, anoSelecionado);
 
             if (reservasPorSala.isEmpty()) {
                 view.setResultado(new String[0][0]);
@@ -36,9 +37,9 @@ public class RelatorioSalasMaisReservadasController {
             }
 
             String[][] dados = reservasPorSala.entrySet().stream()
-                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
-                .map(e -> new String[]{e.getKey(), e.getValue() + " reservas"})
-                .toArray(String[][]::new);
+                    .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                    .map(e -> new String[]{e.getKey(), e.getValue() + " reservas"})
+                    .toArray(String[][]::new);
 
             view.setResultado(dados);
 

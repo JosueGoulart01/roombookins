@@ -5,9 +5,8 @@ import Model.Sala;
 import Model.Usuario;
 import Service.RelatorioService;
 import View.RelatorioView;
-
-import javax.swing.*;
 import java.util.ArrayList;
+import javax.swing.*;
 
 public class RelatorioController {
 
@@ -36,8 +35,14 @@ public class RelatorioController {
     }
 
     private void configurarAcoes() {
-        relatorioView.getBtnTotalArrecadado().addActionListener(e -> new RelatorioTotalArrecadadoController(desktopPane));
-        relatorioView.getBtnSalasMaisReservadas().addActionListener(e -> new RelatorioSalasMaisReservadasController(desktopPane));
-        relatorioView.getBtnMediaHorasPorCliente().addActionListener(e -> new RelatorioMediaHorasPorClienteController(desktopPane));
+        // Agora passamos o Service para todos os Controllers
+        relatorioView.getBtnTotalArrecadado().addActionListener(e ->
+                new RelatorioTotalArrecadadoController(desktopPane, relatorioService));
+
+        relatorioView.getBtnSalasMaisReservadas().addActionListener(e ->
+                new RelatorioSalasMaisReservadasController(desktopPane, relatorioService));
+
+        relatorioView.getBtnMediaHorasPorCliente().addActionListener(e ->
+                new RelatorioMediaHorasPorClienteController(desktopPane, relatorioService));
     }
 }
